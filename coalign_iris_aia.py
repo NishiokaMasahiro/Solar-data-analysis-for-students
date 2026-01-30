@@ -29,11 +29,8 @@ from sunpy.net import attrs as a
 from irispy.io import read_files
 
 ###############################################################################
-# We start with getting the data.
-# This is done by downloading the data from the IRIS archive.
-#
-# In this case, we will use ``pooch`` as to keep this example self-contained
-# but using your browser will also work.
+# IRIS アーカイブからデータをダウンロード。
+# 自己完結型に保つために ``pooch`` を使用するが、ブラウザを使用しても動作。
 
 sji_filename = pooch.retrieve(
     "https://www.lmsal.com/solarsoft/irisa/data/level2_compressed/2025/07/10/20250710_121126_3893010094/iris_l2_20250710_121126_3893010094_SJI_2832_t000_deconvolved.fits.gz",
@@ -41,21 +38,14 @@ sji_filename = pooch.retrieve(
 )
 
 ###############################################################################
-# We will now open the slit-jaw imager (SJI) file we just downloaded.
+# slit-jaw imager (SJI) 画像の読み込み。
 
 sji_2832 = read_files(sji_filename)
-
-###############################################################################
-# We will want to align the data to AIA.
-# First we will want to pick a timestamp during the observation.
-
 (time_sji,) = sji_2832.axis_world_coords("time")
-# We get a sunpy map as the coalignment works on sunpy maps only for now.
 sji_map = sji_2832.to_maps(8)
 
 ###############################################################################
-# We will download the closest AIA 170 nm image from the VSO.
-# Once we have acquired it, we will need to use **aiapy** to prep this image.
+# VSO から最も近い AIA 170 nm 画像をダウンロード。
 
 search_results = Fido.search(
     a.Time(time_sji[0], Time(time_sji[0]) + TimeDelta(1 * u.minute), near=time_sji[0]),
@@ -70,8 +60,8 @@ pointing_table = get_pointing_table(
 )
 aia_map = update_pointing(aia_map, pointing_table=pointing_table)
 
-# Crop the AIA FOV to be similar to IRIS but larger to ensure full coverage.
-# It needs to be at least as large as an expected shift, otherwise you will contend with edge effects
+# AIA FOV を IRIS と同程度、かつより大きくトリミング（完全なカバー範囲を確保）。
+# 予想されるシフトと同じ大きさにしないと、エッジ効果が発生。
 aia_crop = aia_map.submap(
     bottom_left=SkyCoord(
         sji_map.bottom_left_coord.Tx - 50 * u.arcsec,
@@ -88,29 +78,16 @@ aia_crop = aia_map.submap(
 )
 
 # ###############################################################################
-# One way to visualize the alignment is to plot the AIA contours on the IRIS SJI image.
+# IRIS SJI 画像上に AIA 等高線をプロット。
+# 以下では ``sunkit-image`` を使用
 #
-# As one will see, the alignment is not perfect. Creating a pixel perfect WCS
-# is very difficult due to uncertainties in locations and the pointing information.
-#
-# So what we can do is a cross-correlation between IRIS and SDO/AIA to see if we can
-# improve this. The following uses ``sunkit-image`` and currently only works on sunpy Maps,
-# so we will use the SJI Map for this case and not the cube.
-#
-# Before co-aligning the images, we have to make sure that both images have the
-# image scale, as this is important for the routine.
-#
-# Now we can co-align cross-correlation using the "match_template" method.
-# For details of the implementation refer to the documentation of
-# `~sunkit_image.coalignment.match_template.match_template_coalign`.
-
-# Before co-aligning the images, we first resample the AIA image to the same plate
-# scale as the IRIS image. This will ensure better results from our coalignment.
+# 画像を位置合わせする前に、まずAIA画像をIRIS画像と同じプレートスケールにリサンプリング。
+# これにより、共位置合わせの精度が向上します。
 nx = (aia_crop.scale.axis1 * aia_crop.dimensions.x) / sji_map.scale.axis1.to(u.arcsec / u.pix)
 ny = (aia_crop.scale.axis2 * aia_crop.dimensions.y) / sji_map.scale.axis2.to(u.arcsec / u.pix)
 aia_upsampled = aia_crop.resample(u.Quantity([nx, ny]))
 
-# We need to prepare the SJI data by removing NaNs.
+# NaN部分を除去したSJIを用意.
 sji_map_corrected_data = sji_map.data.copy()
 nan_mask = ~np.isfinite(sji_map_corrected_data)
 if np.any(nan_mask):
@@ -120,7 +97,7 @@ sji_map_corrected = sunpy.map.Map(sji_map_corrected_data, sji_map.meta)
 coaligned_sji_map = coalign(sji_map_corrected, aia_upsampled, method="match_template")
 
 # ###############################################################################
-# Finally, we can plot the results of the co-alignment.
+# 位置合わせ結果のプロット。
 
 fig = plt.figure(figsize=(12, 6))
 
