@@ -49,7 +49,6 @@ def plot_aia_hmi_with_magnetogram(
     ax2.set_title("HMI Magnetogram reprojected")
 
     ax3 = fig.add_subplot(1, 3, 3, projection=aia_sub)
-    # aia_data_log = np.log10(np.clip(aia_sub.data, a_min=1, a_max=None))
     aia_sub.plot(axes=ax3, data=aia_sub.data, vmin=200, vmax=3000)
     ax3.set_title("AIA 1600")
     
@@ -66,7 +65,6 @@ def plot_aia_hmi_with_magnetogram(
 
     # HMI磁場のcontourレベルはAstropy Quantity（Gauss）で渡す
     levels = [30, 50, 150, 300] * u.Gauss
-    # levels = [50, 100, 150, 300, 500, 1000] * u.Gauss
     levels = np.concatenate((-1 * levels[::-1], levels))
     bounds = ax.axis()
 
@@ -85,4 +83,5 @@ if __name__ == "__main__":
     hmi_intensity_fits = "2013_09_24_fits/hmi_data/hmi.Ic_45s.20130924_115700_TAI.2.continuum.fits"
     hmi_magnetgram_fits = "2013_09_24_fits/hmi_data/hmi.M_45s.20130924_115700_TAI.2.magnetogram.fits"
     aia_fits = "2013_09_24_fits/aia_data/aia.lev1_uv_24s.2013-09-24T115706Z.1600.image_lev1.fits"
+
     plot_aia_hmi_with_magnetogram(hmi_intensity_fits, hmi_magnetgram_fits, aia_fits)
