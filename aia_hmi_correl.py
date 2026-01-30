@@ -80,8 +80,9 @@ def plot_aia_hmi_with_magnetogram(
     
 # --- サンプル実行例 ---
 if __name__ == "__main__":
-    hmi_intensity_fits = "2013_09_24_fits/hmi_data/hmi.Ic_45s.20130924_115700_TAI.2.continuum.fits"
+    hmi_intensity_fits  = "2013_09_24_fits/hmi_data/hmi.Ic_45s.20130924_115700_TAI.2.continuum.fits"
     hmi_magnetgram_fits = "2013_09_24_fits/hmi_data/hmi.M_45s.20130924_115700_TAI.2.magnetogram.fits"
-    aia_fits = "2013_09_24_fits/aia_data/aia.lev1_uv_24s.2013-09-24T115706Z.1600.image_lev1.fits"
+    aia_fits            = "2013_09_24_fits/aia_data/aia.lev1_uv_24s.2013-09-24T115706Z.1600.image_lev1.fits"
 
     plot_aia_hmi_with_magnetogram(hmi_intensity_fits, hmi_magnetgram_fits, aia_fits)
+
